@@ -2,6 +2,12 @@ import streamlit as st
 from sklearn import datasets
 import numpy as np
 
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
 st.title("Project X")
 
 st.write(""" 
@@ -9,17 +15,17 @@ st.write("""
 *Try Parameters*
 """)
 
-dataset_name= st.sidebar.selectbox("Select Dataset", ("Iris","Wine","Breast","Diabetes"))
+dataset_name= st.sidebar.selectbox("Select Dataset", ("Iris","Wine","Breast Cancer","Digits"))
 
 classifier_name= st.sidebar.selectbox("Select Classifier", ("KNN","SVM","Random Forest"))
 
 def get_dataset(dataset_name):
     if dataset_name == "Iris":
         data = datasets.load_iris()
-    elif dataset_name == "Breast":
+    elif dataset_name == "Breast Cancer":
         data = datasets.load_breast_cancer()
-    elif dataset_name == "Diabetes":
-        data =datasets.load_diabetes()
+    elif dataset_name == "Digits":
+        data =datasets.load_digits()
     else:
         data = datasets.load_wine()
     X = data.data
@@ -45,15 +51,27 @@ def add_parameter(clf_name):
         params["max_depth"] = max_depth
     return params
 
-add_parameter(classifier_name)
+params = add_parameter(classifier_name)
 
+def get_classifier(clf_name,params):
+    if clf_name == "KNN":
+        clf = KNeighborsClassifier(n_neighbors=params["K"])
+    elif clf_name == "SVM":
+        clf = SVC(C=params["C"])
+    else:
+        clf = RandomForestClassifier(n_estimators=params["n_estimators"],
+                                     max_depth=params["max_depth"],random_state=1234)
+    return clf
 
+clf = get_classifier(classifier_name,params)
 
+# Classification
 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1234)
 
+clf.fit(X_train,y_train)
+y_pred = clf.predict(X_test)
 
-
-
-
-
-
+acc = accuracy_score(y_test, y_pred)
+st.write(f"classifier={classifier_name}")
+st.write(f"accuracy= {acc}")
