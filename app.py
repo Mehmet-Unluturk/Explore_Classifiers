@@ -1,29 +1,23 @@
 import streamlit as st
-from sklearn import datasets
 import numpy as np
-import pandas as pd
+import matplotlib.pyplot as plt
 
+from sklearn import datasets
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-
 from sklearn.decomposition import PCA
-import matplotlib.pyplot as plt
 
-st.title("Project X")
-
-st.write(""" 
-# Explore Classifier
-*Try Parameters*
-""")
+st.title("Explore Classifier")
 
 dataset_name= st.sidebar.selectbox("Select Dataset", ("Iris","Wine","Breast Cancer"))
 
-classifier_name= st.sidebar.selectbox("Select Classifier", ("KNN","SVM","Random Forest","GaussianNB","MultinomialNB"))
+classifier_name= st.sidebar.selectbox("Select Classifier", ("KNN","SVM","Random Forest","GaussianNB","MultinomialNB","Logistic"))
 
 def get_dataset(dataset_name):
     if dataset_name == "Iris":
@@ -56,6 +50,15 @@ def add_parameter(clf_name):
     
         params["alpha"] = alpha
         params["fit_prior"] = fit_prior
+    elif clf_name == "Logistic":
+        C = st.sidebar.slider("C",0.01,10.0)
+        penalty = st.sidebar.selectbox("Penalty", ["l1", "l2", "elasticnet"])
+        solver = "liblinear" if penalty in ["l1", "l2"] else "saga"
+        l1_ratio = st.sidebar.slider("l1_ratio", 0.0, 1.0, key="l1_ratio") if penalty == "elasticnet" else None
+        params["C"] = C
+        params["penalty"] = penalty
+        params["solver"] = solver
+        params["l1_ratio"] = l1_ratio
     else:
         max_depth = st.sidebar.slider("max_depth", 2, 15)
         n_estimators = st.sidebar.slider("n_estimators", 1, 100)
@@ -75,6 +78,11 @@ def get_classifier(clf_name,params):
     elif clf_name == "MultinomialNB":
         clf = MultinomialNB(alpha=params["alpha"], 
                             fit_prior=params["fit_prior"])
+    elif clf_name == "Logistic":
+        clf = LogisticRegression(C=params["C"],
+                                 penalty=params["penalty"],
+                                 solver=params["solver"],
+                                 l1_ratio=params["l1_ratio"])
     else:
         clf = RandomForestClassifier(n_estimators=params["n_estimators"],
                                      max_depth=params["max_depth"],random_state=1234)
@@ -107,5 +115,3 @@ ax.set_ylabel("Principal Component 2")
 fig.colorbar(scatter)
 
 st.pyplot(fig)
-
-
