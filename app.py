@@ -1,6 +1,8 @@
 import streamlit as st
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from sklearn import datasets
 from sklearn.neighbors import KNeighborsClassifier
@@ -11,7 +13,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import f1_score, confusion_matrix
 from sklearn.decomposition import PCA
+
 
 st.title("Explore Classifier")
 
@@ -28,11 +32,23 @@ def get_dataset(dataset_name):
         data = datasets.load_wine()
     X = data.data
     y = data.target
-    return X,y
+    return X,y , pd.DataFrame(X, columns=data.feature_names)
 
-X,y = get_dataset(dataset_name)
+X,y ,df = get_dataset(dataset_name)
 st.write("Shape of Dataset:" ,X.shape)
 st.write("Number of Classes:", len(np.unique(y)))
+
+toggle_button = st.sidebar.button('Show Dataset Head')
+
+if 'show_dataset' not in st.session_state:
+    st.session_state.show_dataset = False
+
+if toggle_button:
+    st.session_state.show_dataset = not st.session_state.show_dataset
+
+if st.session_state.show_dataset:
+    st.write('First 6 rows of the dataset:')
+    st.dataframe(df.head(6))
 
 def add_parameter(clf_name):
     params = dict()
@@ -103,6 +119,18 @@ acc = accuracy_score(y_test, y_pred)
 st.write(f"classifier={classifier_name}")
 st.write(f"Accuracy: {acc:.4f}")
 
+f1 = f1_score(y_test, y_pred, average='weighted') 
+st.write(f"F1 Score: {f1:.4f}")
+
+# Confusion Matrix
+cm = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(6, 3))
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=np.unique(y), yticklabels=np.unique(y))
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix')
+st.pyplot(plt.gcf())
+
 #Plotting
 pca =PCA(2)
 X_projected = pca.fit_transform(X)
@@ -110,7 +138,7 @@ X_projected = pca.fit_transform(X)
 x1 = X_projected[:, 0]
 x2 = X_projected[:, 1]
 
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(6, 4))
 scatter = ax.scatter(x1, x2, c=y, alpha=0.8, cmap="viridis")
 ax.set_xlabel("Principal Component 1")
 ax.set_ylabel("Principal Component 2")
