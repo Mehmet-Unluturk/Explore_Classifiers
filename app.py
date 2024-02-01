@@ -15,6 +15,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score, confusion_matrix
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+
 
 
 st.title("Explore Classifier")
@@ -83,9 +85,18 @@ def add_parameter(clf_name):
         n_estimators = st.sidebar.slider("n_estimators", 1, 100)
         params["n_estimators"] = n_estimators
         params["max_depth"] = max_depth
+    scale_option = st.sidebar.selectbox("Feature Scaling", ["None", "StandardScaler", "MinMaxScaler"])
+    params["scale_option"] = scale_option
     return params
 
 params = add_parameter(classifier_name)
+
+if params["scale_option"] == "StandardScaler":
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
+elif params["scale_option"] == "MinMaxScaler":
+    scaler = MinMaxScaler()
+    X = scaler.fit_transform(X)
 
 def get_classifier(clf_name,params):
     if clf_name == "KNN":
@@ -111,6 +122,10 @@ clf = get_classifier(classifier_name,params)
 # Classification
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1234)
+
+if params["scale_option"] != "None":
+    X_train = scaler.transform(X_train)
+    X_test = scaler.transform(X_test)
 
 clf.fit(X_train,y_train)
 y_pred = clf.predict(X_test)
