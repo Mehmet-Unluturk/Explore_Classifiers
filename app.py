@@ -17,13 +17,13 @@ from sklearn.metrics import f1_score, confusion_matrix
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-
-
 st.title("Explore Classifier")
 
-dataset_name= st.sidebar.selectbox("Select Dataset", ("Iris","Wine","Breast Cancer"))
+dataset_name = st.sidebar.selectbox("Select Dataset", ("Iris", "Wine", "Breast Cancer"))
 
-classifier_name= st.sidebar.selectbox("Select Classifier", ("KNN","SVM","Random Forest","Naive Bayes","Logistic","Decision Tree"))
+classifier_name = st.sidebar.selectbox("Select Classifier", ("KNN", "SVM", "Random Forest", "Naive Bayes", "Logistic", "Decision Tree"))
+
+scale_option = st.sidebar.selectbox("Feature Scaling", ["None", "StandardScaler", "MinMaxScaler"])
 
 def get_dataset(dataset_name):
     if dataset_name == "Iris":
@@ -34,13 +34,13 @@ def get_dataset(dataset_name):
         data = datasets.load_wine()
     X = data.data
     y = data.target
-    return X,y , pd.DataFrame(X, columns=data.feature_names)
+    return X, y, pd.DataFrame(X, columns=data.feature_names)
 
-X,y ,df = get_dataset(dataset_name)
-st.write("Shape of Dataset:" ,X.shape)
+X, y, df = get_dataset(dataset_name)
+st.write("Shape of Dataset:", X.shape)
 st.write("Number of Classes:", len(np.unique(y)))
 
-toggle_button = st.sidebar.button('Show Dataset Head')
+toggle_button = st.sidebar.button('Show Dataset')
 
 if 'show_dataset' not in st.session_state:
     st.session_state.show_dataset = False
@@ -65,11 +65,8 @@ def add_parameter(clf_name):
         fit_prior = st.sidebar.checkbox("fit_prior", value=True)
         params["alpha"] = alpha
         params["fit_prior"] = fit_prior
-    
-        params["alpha"] = alpha
-        params["fit_prior"] = fit_prior
     elif clf_name == "Logistic":
-        C = st.sidebar.slider("C",0.01,1.0)
+        C = st.sidebar.slider("C", 0.01, 1.0)
         penalty = st.sidebar.selectbox("Penalty", ["l1", "l2", "elasticnet"])
         solver = "liblinear" if penalty in ["l1", "l2"] else "saga"
         l1_ratio = st.sidebar.slider("l1_ratio", 0.0, 1.0, key="l1_ratio") if penalty == "elasticnet" else None
@@ -78,14 +75,13 @@ def add_parameter(clf_name):
         params["solver"] = solver
         params["l1_ratio"] = l1_ratio
     elif clf_name == "Decision Tree":
-        criterion = st.sidebar.selectbox("Criterion",["gini","entropy","log_loss"])
+        criterion = st.sidebar.selectbox("Criterion", ["gini", "entropy", "log_loss"])
         params["criterion"] = criterion
     else:
         max_depth = st.sidebar.slider("max_depth", 2, 15)
         n_estimators = st.sidebar.slider("n_estimators", 1, 100)
         params["n_estimators"] = n_estimators
         params["max_depth"] = max_depth
-    scale_option = st.sidebar.selectbox("Feature Scaling", ["None", "StandardScaler", "MinMaxScaler"])
     params["scale_option"] = scale_option
     return params
 
@@ -98,7 +94,7 @@ elif params["scale_option"] == "MinMaxScaler":
     scaler = MinMaxScaler()
     X = scaler.fit_transform(X)
 
-def get_classifier(clf_name,params):
+def get_classifier(clf_name, params):
     if clf_name == "KNN":
         clf = KNeighborsClassifier(n_neighbors=params["K"])
     elif clf_name == "SVM":
@@ -114,12 +110,11 @@ def get_classifier(clf_name,params):
         clf = DecisionTreeClassifier(criterion=params.get("criterion", "gini"))
     else:
         clf = RandomForestClassifier(n_estimators=params["n_estimators"],
-                                     max_depth=params["max_depth"],random_state=1234)
+                                     max_depth=params["max_depth"], random_state=1234)
     return clf
 
-clf = get_classifier(classifier_name,params)
+clf = get_classifier(classifier_name, params)
 
-# Classification
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1234)
 
@@ -127,17 +122,17 @@ if params["scale_option"] != "None":
     X_train = scaler.transform(X_train)
     X_test = scaler.transform(X_test)
 
-clf.fit(X_train,y_train)
+clf.fit(X_train, y_train)
 y_pred = clf.predict(X_test)
 
 acc = accuracy_score(y_test, y_pred)
-st.write(f"classifier={classifier_name}")
+st.write(f"Classifier: {classifier_name}")
 st.write(f"Accuracy: {acc:.4f}")
 
-f1 = f1_score(y_test, y_pred, average='weighted') 
+f1 = f1_score(y_test, y_pred, average='weighted')
 st.write(f"F1 Score: {f1:.4f}")
 
-# Confusion Matrix
+
 cm = confusion_matrix(y_test, y_pred)
 plt.figure(figsize=(6, 3))
 sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=np.unique(y), yticklabels=np.unique(y))
@@ -146,8 +141,8 @@ plt.ylabel('Actual')
 plt.title('Confusion Matrix')
 st.pyplot(plt.gcf())
 
-#Plotting
-pca =PCA(2)
+
+pca = PCA(2)
 X_projected = pca.fit_transform(X)
 
 x1 = X_projected[:, 0]
